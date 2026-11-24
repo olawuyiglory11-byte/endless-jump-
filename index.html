@@ -8,6 +8,7 @@
       width: 100vw;
       height: 100vh;
       position: relative;
+      overflow: hidden;
       background: #cce;
     }
     #player {
@@ -17,33 +18,45 @@
       position: absolute;
       bottom: 0;
       left: 50px;
+      z-index: 1;
     }
-    #obstacle {
-      width: 40px;
-      height: 40px;
-      background: #333;
+    .obstacle {
       position: absolute;
       bottom: 0;
-      right: -40px;
+      right: -80px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      line-height: 1;
+      user-select: none;
     }
+    .cactus { width: 46px; height: 58px; font-size: 54px; }
+    .car { width: 64px; height: 44px; font-size: 48px; }
+    .bus { width: 82px; height: 58px; font-size: 58px; }
   </style>
 </head>
 <body>
   <div id="game">
     <div id="player"></div>
-    <div id="obstacle"></div>
   </div>
 
   <script>
+    const game = document.getElementById("game");
     const player = document.getElementById("player");
-    const obstacle = document.getElementById("obstacle");
+    const obstacleTypes = [
+      { name: "cactus", icon: "🌵", width: 46 },
+      { name: "car", icon: "🚗", width: 64 },
+      { name: "bus", icon: "🚌", width: 82 }
+    ];
 
     let jumping = false;
     let velocity = 0;
     const gravity = 0.6;
+    const obstacleSpeed = 6;
+    let gameOver = false;
 
     function jump() {
-      if (!jumping) {
+      if (!jumping && !gameOver) {
         jumping = true;
         velocity = 12;
       }
@@ -55,8 +68,27 @@
         jump();
       }
     });
+    game.addEventListener("pointerdown", jump);
+
+    function spawnObstacle() {
+      if (gameOver) return;
+
+      const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+      const obstacle = document.createElement("div");
+      obstacle.className = `obstacle ${type.name}`;
+      obstacle.textContent = type.icon;
+      obstacle.setAttribute("aria-label", type.name);
+      obstacle.style.right = `-${type.width}px`;
+      game.appendChild(obstacle);
+
+      // Vary the gap so obstacles don't arrive in a fixed pattern.
+      const nextSpawnDelay = 900 + Math.random() * 1100;
+      window.setTimeout(spawnObstacle, nextSpawnDelay);
+    }
 
     function update() {
+      if (gameOver) return;
+
       if (jumping) {
         let bottom = parseFloat(player.style.bottom) || 0;
         bottom += velocity;
@@ -71,27 +103,33 @@
         player.style.bottom = bottom + "px";
       }
 
-      let obstacleRight = parseFloat(getComputedStyle(obstacle).right) + 6;
-      if (obstacleRight > window.innerWidth + 40) {
-        obstacleRight = -40;
-      }
-      obstacle.style.right = obstacleRight + "px";
-
       const playerRect = player.getBoundingClientRect();
-      const obstacleRect = obstacle.getBoundingClientRect();
-      if (
-        playerRect.left < obstacleRect.right &&
-        playerRect.right > obstacleRect.left &&
-        playerRect.bottom > obstacleRect.top
-      ) {
-        alert("Game Over!");
-        window.location.reload();
-        return;
-      }
+      document.querySelectorAll(".obstacle").forEach((obstacle) => {
+        const right = parseFloat(getComputedStyle(obstacle).right) + obstacleSpeed;
+        obstacle.style.right = right + "px";
+
+        if (right > window.innerWidth + obstacle.offsetWidth) {
+          obstacle.remove();
+          return;
+        }
+
+        const obstacleRect = obstacle.getBoundingClientRect();
+        if (
+          playerRect.left < obstacleRect.right &&
+          playerRect.right > obstacleRect.left &&
+          playerRect.bottom > obstacleRect.top &&
+          playerRect.top < obstacleRect.bottom
+        ) {
+          gameOver = true;
+          alert("Game Over!");
+          window.location.reload();
+        }
+      });
 
       requestAnimationFrame(update);
     }
 
+    window.setTimeout(spawnObstacle, 700);
     update();
   </script>
 </body>
