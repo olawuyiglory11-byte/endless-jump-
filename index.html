@@ -1,1 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mini Runner</title>
+  <style>
+    body { margin:0; overflow:hidden; background:#eee; }
+    #game {
+      width:100vw; height:100vh; position:relative; background:#cce;
+    }
+    #player {
+      width:50px; height:50px; background:#f33;
+      position:absolute; bottom:0; left:50px;
+    }
+    #obstacle {
+      width:40px; height:40px; background:#333;
+      position:absolute; bottom:0; right:-40px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="player"></div>
+    <div id="obstacle"></div>
+  </div>
 
+  <script>
+    const player = document.getElementById("player");
+    const obstacle = document.getElementById("obstacle");
+
+    let jumping = false;
+    let velocity = 0;
+    let gravity = 0.6;
+
+    function jump() {
+      if (!jumping) {
+        jumping = true;
+        velocity = -12;
+      }
+    }
+
+    document.addEventListener("keydown", jump);
+
+    function update() {
+      // Player physics
+      velocity += gravity;
+      player.style.bottom = Math.max(0, parseInt(player.style.bottom) + velocity) + "px";
+
+      if (parseInt(player.style.bottom) <= 0) {
+        jumping = false;
+      }
+
+      // Obstacle movement
+      let obsX = parseInt(obstacle.style.right);
+      obsX += 6;
+      if (obsX > window.innerWidth + 40) obsX = -40;
+      obstacle.style.right = obsX + "px";
+
+      // Collision
+      const pRect = player.getBoundingClientRect();
+      const oRect = obstacle.getBoundingClientRect();
+
+      if (
+        pRect.left < oRect.right &&
+        pRect.right > oRect.left &&
+        pRect.bottom > oRect.top
+      ) {
+        alert("Game Over!");
+        window.location.reload();
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    update();
+  </script>
+</body>
+</html>
