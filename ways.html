@@ -3,74 +3,133 @@
 <head>
   <title>Mini Runner</title>
   <style>
-    body { margin:0; overflow:hidden; background:#eee; }
+    body { margin: 0; overflow: hidden; background: #eee; }
     #game {
-      width:100vw; height:100vh; position:relative; background:#cce;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+      background: #cce;
     }
     #player {
-      width:50px; height:50px; background:#f33;
-      position:absolute; bottom:0; left:50px;
+      width: 50px;
+      height: 50px;
+      background: #f33;
+      position: absolute;
+      bottom: 0;
+      left: 50px;
+      z-index: 1;
     }
-    #obstacle {
-      width:40px; height:40px; background:#333;
-      position:absolute; bottom:0; right:-40px;
+    .obstacle {
+      position: absolute;
+      bottom: 0;
+      right: -80px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      line-height: 1;
+      user-select: none;
     }
+    .cactus { width: 46px; height: 58px; font-size: 54px; }
+    .car { width: 64px; height: 44px; font-size: 48px; }
+    .bus { width: 82px; height: 58px; font-size: 58px; }
   </style>
 </head>
 <body>
   <div id="game">
     <div id="player"></div>
-    <div id="obstacle"></div>
   </div>
 
   <script>
+    const game = document.getElementById("game");
     const player = document.getElementById("player");
-    const obstacle = document.getElementById("obstacle");
+    const obstacleTypes = [
+      { name: "cactus", icon: "🌵", width: 46 },
+      { name: "car", icon: "🚗", width: 64 },
+      { name: "bus", icon: "🚌", width: 82 }
+    ];
 
     let jumping = false;
     let velocity = 0;
-    let gravity = 0.6;
+    const gravity = 0.6;
+    const obstacleSpeed = 6;
+    let gameOver = false;
 
     function jump() {
-      if (!jumping) {
+      if (!jumping && !gameOver) {
         jumping = true;
-        velocity = -12;
+        velocity = 12;
       }
     }
 
-    document.addEventListener("keydown", jump);
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "ArrowUp" || event.code === "Space") {
+        event.preventDefault();
+        jump();
+      }
+    });
+    game.addEventListener("pointerdown", jump);
+
+    function spawnObstacle() {
+      if (gameOver) return;
+
+      const type = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
+      const obstacle = document.createElement("div");
+      obstacle.className = `obstacle ${type.name}`;
+      obstacle.textContent = type.icon;
+      obstacle.setAttribute("aria-label", type.name);
+      obstacle.style.right = `-${type.width}px`;
+      game.appendChild(obstacle);
+
+      // Vary the gap so obstacles don't arrive in a fixed pattern.
+      const nextSpawnDelay = 900 + Math.random() * 1100;
+      window.setTimeout(spawnObstacle, nextSpawnDelay);
+    }
 
     function update() {
-      // Player physics
-      velocity += gravity;
-      player.style.bottom = Math.max(0, parseInt(player.style.bottom) + velocity) + "px";
+      if (gameOver) return;
 
-      if (parseInt(player.style.bottom) <= 0) {
-        jumping = false;
+      if (jumping) {
+        let bottom = parseFloat(player.style.bottom) || 0;
+        bottom += velocity;
+        velocity -= gravity;
+
+        if (bottom <= 0) {
+          bottom = 0;
+          velocity = 0;
+          jumping = false;
+        }
+
+        player.style.bottom = bottom + "px";
       }
 
-      // Obstacle movement
-      let obsX = parseInt(obstacle.style.right);
-      obsX += 6;
-      if (obsX > window.innerWidth + 40) obsX = -40;
-      obstacle.style.right = obsX + "px";
+      const playerRect = player.getBoundingClientRect();
+      document.querySelectorAll(".obstacle").forEach((obstacle) => {
+        const right = parseFloat(getComputedStyle(obstacle).right) + obstacleSpeed;
+        obstacle.style.right = right + "px";
 
-      // Collision
-      const pRect = player.getBoundingClientRect();
-      const oRect = obstacle.getBoundingClientRect();
+        if (right > window.innerWidth + obstacle.offsetWidth) {
+          obstacle.remove();
+          return;
+        }
 
-      if (
-        pRect.left < oRect.right &&
-        pRect.right > oRect.left &&
-        pRect.bottom > oRect.top
-      ) {
-        alert("Game Over!");
-        window.location.reload();
-      }
+        const obstacleRect = obstacle.getBoundingClientRect();
+        if (
+          playerRect.left < obstacleRect.right &&
+          playerRect.right > obstacleRect.left &&
+          playerRect.bottom > obstacleRect.top &&
+          playerRect.top < obstacleRect.bottom
+        ) {
+          gameOver = true;
+          alert("Game Over!");
+          window.location.reload();
+        }
+      });
 
       requestAnimationFrame(update);
     }
 
+    window.setTimeout(spawnObstacle, 700);
     update();
   </script>
 </body>
