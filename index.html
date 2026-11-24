@@ -3,17 +3,28 @@
 <head>
   <title>Mini Runner</title>
   <style>
-    body { margin:0; overflow:hidden; background:#eee; }
+    body { margin: 0; overflow: hidden; background: #eee; }
     #game {
-      width:100vw; height:100vh; position:relative; background:#cce;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      background: #cce;
     }
     #player {
-      width:50px; height:50px; background:#f33;
-      position:absolute; bottom:0; left:50px;
+      width: 50px;
+      height: 50px;
+      background: #f33;
+      position: absolute;
+      bottom: 0;
+      left: 50px;
     }
     #obstacle {
-      width:40px; height:40px; background:#333;
-      position:absolute; bottom:0; right:-40px;
+      width: 40px;
+      height: 40px;
+      background: #333;
+      position: absolute;
+      bottom: 0;
+      right: -40px;
     }
   </style>
 </head>
@@ -29,115 +40,59 @@
 
     let jumping = false;
     let velocity = 0;
-    let gravity = 0.6;
+    const gravity = 0.6;
 
     function jump() {
       if (!jumping) {
         jumping = true;
-        velocity = -12;
+        velocity = 12;
       }
     }
 
-    document.addEventListener("keydown", jump);
+    document.addEventListener("keydown", (event) => {
+      if (event.code === "ArrowUp" || event.code === "Space") {
+        event.preventDefault();
+        jump();
+      }
+    });
 
     function update() {
-      // Player physics
-      velocity += gravity;
-      player.style.bottom = Math.max(0, parseInt(player.style.bottom) + velocity) + "px";
+      if (jumping) {
+        let bottom = parseFloat(player.style.bottom) || 0;
+        bottom += velocity;
+        velocity -= gravity;
 
-      if (parseInt(player.style.bottom) <= 0) {
-        jumping = false;
+        if (bottom <= 0) {
+          bottom = 0;
+          velocity = 0;
+          jumping = false;
+        }
+
+        player.style.bottom = bottom + "px";
       }
 
-      // Obstacle movement
-      let obsX = parseInt(obstacle.style.right);
-      obsX += 6;
-      if (obsX > window.innerWidth + 40) obsX = -40;
-      obstacle.style.right = obsX + "px";
+      let obstacleRight = parseFloat(getComputedStyle(obstacle).right) + 6;
+      if (obstacleRight > window.innerWidth + 40) {
+        obstacleRight = -40;
+      }
+      obstacle.style.right = obstacleRight + "px";
 
-      // Collision
-      const pRect = player.getBoundingClientRect();
-      const oRect = obstacle.getBoundingClientRect();
-
+      const playerRect = player.getBoundingClientRect();
+      const obstacleRect = obstacle.getBoundingClientRect();
       if (
-        pRect.left < oRect.right &&
-        pRect.right > oRect.left &&
-        pRect.bottom > oRect.top
+        playerRect.left < obstacleRect.right &&
+        playerRect.right > obstacleRect.left &&
+        playerRect.bottom > obstacleRect.top
       ) {
         alert("Game Over!");
         window.location.reload();
+        return;
       }
 
       requestAnimationFrame(update);
     }
 
     update();
-    <script>
-  const player = document.getElementById("player");
-  const obstacle = document.getElementById("obstacle");
-
-
-  player.style.bottom = "0px";
-  obstacle.style.right = "-40px";
-
-  let jumping = false;
-  let velocity = 0;
-  const gravity = 0.6;
-
-  function jump() {
-    if (!jumping) {
-      jumping = true;
-      velocity = 12; 
-    }
-  }
-
-  document.addEventListener("keydown", (event) => {
-    if (event.code === "Space" || event.code === "ArrowUp") {
-      event.preventDefault();
-      jump();
-    }
-  });
-
-  function update() {
-    let bottom = parseFloat(player.style.bottom);
-
-    if (jumping) {
-      bottom += velocity;
-      velocity -= gravity;
-
-      if (bottom <= 0) {
-        bottom = 0;
-        velocity = 0;
-        jumping = false;
-      }
-
-      player.style.bottom = bottom + "px";
-    }
-
-    let obstacleRight = parseFloat(obstacle.style.right) + 6;
-
-    if (obstacleRight > window.innerWidth + 40) {
-      obstacleRight = -40;
-    }
-    obstacle.style.right = obstacleRight + "px";
-
-    const pRect = player.getBoundingClientRect();
-    const oRect = obstacle.getBoundingClientRect();
-
-    if (
-      pRect.left < oRect.right &&
-      pRect.right > oRect.left &&
-      pRect.bottom > oRect.top
-    ) {
-      alert("Game Over!");
-      window.location.reload();
-      return;
-    }
-
-    requestAnimationFrame(update);
-  }
-
-  update();
-</script>
+  </script>
 </body>
 </html>
