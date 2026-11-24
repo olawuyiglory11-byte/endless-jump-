@@ -72,6 +72,73 @@
     }
 
     update();
+    <script>
+  const player = document.getElementById("player");
+  const obstacle = document.getElementById("obstacle");
+
+  // Initialize positions because the game reads these values in JavaScript.
+  player.style.bottom = "0px";
+  obstacle.style.right = "-40px";
+
+  let jumping = false;
+  let velocity = 0;
+  const gravity = 0.6;
+
+  function jump() {
+    if (!jumping) {
+      jumping = true;
+      velocity = 12; // Positive bottom value moves the player upward.
+    }
+  }
+
+  document.addEventListener("keydown", (event) => {
+    if (event.code === "Space" || event.code === "ArrowUp") {
+      event.preventDefault();
+      jump();
+    }
+  });
+
+  function update() {
+    let bottom = parseFloat(player.style.bottom);
+
+    if (jumping) {
+      bottom += velocity;
+      velocity -= gravity;
+
+      if (bottom <= 0) {
+        bottom = 0;
+        velocity = 0;
+        jumping = false;
+      }
+
+      player.style.bottom = bottom + "px";
+    }
+
+    let obstacleRight = parseFloat(obstacle.style.right) + 6;
+
+    if (obstacleRight > window.innerWidth + 40) {
+      obstacleRight = -40;
+    }
+    obstacle.style.right = obstacleRight + "px";
+
+    const pRect = player.getBoundingClientRect();
+    const oRect = obstacle.getBoundingClientRect();
+
+    if (
+      pRect.left < oRect.right &&
+      pRect.right > oRect.left &&
+      pRect.bottom > oRect.top
+    ) {
+      alert("Game Over!");
+      window.location.reload();
+      return;
+    }
+
+    requestAnimationFrame(update);
+  }
+
+  update();
+</script>
   </script>
 </body>
 </html>
