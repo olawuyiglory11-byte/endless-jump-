@@ -76,7 +76,7 @@
   const player = document.getElementById("player");
   const obstacle = document.getElementById("obstacle");
 
-  // Initialize positions because the game reads these values in JavaScript.
+
   player.style.bottom = "0px";
   obstacle.style.right = "-40px";
 
@@ -87,7 +87,7 @@
   function jump() {
     if (!jumping) {
       jumping = true;
-      velocity = 12; // Positive bottom value moves the player upward.
+      velocity = 12; 
     }
   }
 
@@ -139,6 +139,5 @@
 
   update();
 </script>
-  </script>
 </body>
 </html>
