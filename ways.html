@@ -184,10 +184,10 @@
           playerRect.top < obstacleRect.bottom
         ) {
           gameOver = true;
-          alert(`Game Over! Best jump: ${Math.round(bestJumpHeight)} px`);
+          alert(`Game Over! Best jump: ${Math.round(bestJumpHeight)} 
           window.location.reload();
         }
-      });
+      
 
       if (!paused) requestAnimationFrame(update);
     }
